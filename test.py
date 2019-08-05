@@ -10,22 +10,23 @@ timestep = 1 * 10**6
 core_fraction_per_timestep = max_core_formation_time / timestep
 fO2 = -2.25
 body_mass = 2.59 * 10**20
+body_radius = 262.7 * 1000
 conc_bulk_182hf = 20.692 * 10**-9
 radius_vestian_core = 113 * 1000
 volume_vestian_core = (4 / 3) * pi * (radius_vestian_core**3)
 mass_vestian_core = volume_vestian_core * density_metal
 max_modeling_time = 100 * 10**6
 
-alpha = 0
-beta = 0
-chi = 0
-delta = 0
-epsilon = 0
+alpha = 1.11
+beta = -1.18
+chi = -0.85
+delta = 1680
+epsilon = 487
 
-surface_temp = 0
+surface_temp = 2000
 surface_pressure = 0
-therm_expansivity = 0
-heat_capacity = 0
+therm_expansivity = 6 * (10**(-5))
+heat_capacity = 10**3
 gravity = 0.25
 
 time_range = np.arange(0, max_modeling_time + timestep, timestep)
@@ -37,11 +38,13 @@ metal_added_at_time = []
 bulk_mass_182w = []
 bulk_moles_182hf = []
 bulk_moles_182w = []
+cmb_depth = []
 
 # build the model
 m = Model(
     body_core_mass=mass_vestian_core,
     body_mass=body_mass,
+    body_radius=body_radius,
     timestep=timestep,
     max_time_core_formation=max_core_formation_time,
     fO2=fO2,
@@ -78,7 +81,8 @@ while m.time <= max_modeling_time:
     t = m.adiabat()
     p = m.hydrostat()
     d = m.partitioning(temperature=t, pressure=p)
-    cmb_depth = m.core_mantle_boundary_depth
+    cmb_depth.append(m.core_mantle_boundary_depth)
+
 
 
 fig1 = plt.figure()
@@ -108,5 +112,15 @@ ax3.set_xlabel("Time (Ma)")
 ax3.set_ylabel("Bulk Moles")
 ax3.set_title("Bulk Moles in Vesta")
 ax3.legend(loc='lower right')
+
+fig4 = plt.figure()
+ax4 = fig4.add_subplot(111)
+ax4.plot(time_range, [i / 1000 for i in cmb_depth], linewidth=1.5, color='black', label="CMB Depth")
+ax4.axhline(radius_vestian_core / 1000, linestyle="--", color='red', label='Modern Core Radius')
+ax4.grid()
+ax4.set_xlabel("Time (Ma)")
+ax4.set_ylabel("CMB Depth (km)")
+ax4.set_title("CMB Depth in Vesta")
+ax4.legend(loc='lower right')
 
 plt.show()
