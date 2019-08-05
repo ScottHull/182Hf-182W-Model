@@ -1,13 +1,12 @@
-import pandas as pd
-from math import sqrt, log, exp
+from math import sqrt, log, exp, pi
 from copy import copy
-import matplotlib.pyplot as plt
 
 class Model:
 
     def __init__(
             self, body_core_mass, body_mass, timestep, max_time_core_formation, fO2, core_fraction_per_timestep,
-            conc_bulk_182hf
+            conc_bulk_182hf, alpha, beta, chi, delta, epsilon, surface_temperature, surface_pressure,
+            silicate_thermal_expansivity, gravitational_acceleration, silicate_heat_capacity
     ):
 
         self.__half_life_182hf = 8.9 * 10**6  # the half life of 182Hf, do not set
@@ -44,14 +43,52 @@ class Model:
         self.__conc_metal_184w = 0
         self.__conc_core_184w = 0
 
+        self.alpha = alpha
+        self.beta = beta
+        self.chi = chi
+        self.delta = delta
+        self.epislon = epsilon
+
+        self.nbo_t = 2.6
+
+        self.surface_temperature = surface_temperature
+        self.surface_pressure = surface_pressure
+
+        self.gravitational_acceleration = gravitational_acceleration
+        self.silicate_thermal_expansivity = silicate_thermal_expansivity
+        self.silicate_heat_capacity = silicate_heat_capacity
+
+        self.core_mantle_boundary_depth = 0
+
+        self.volume_core = 0
+        self.density_metal = 7800
+        self.density_silicate = 3750
+
+
+
+
     def adiabat(self):
-        pass
+
+        T = self.surface_temperature * (1 + (self.silicate_thermal_expansivity * self.gravitational_acceleration
+                                             * self.core_mantle_boundary_depth) / self.silicate_heat_capacity)
+
+        return T
 
     def hydrostat(self):
-        pass
 
-    def partitioning(self):
-        pass
+        P = self.surface_pressure + (self.density_silicate * self.gravitational_acceleration *
+                                     self.core_mantle_boundary_depth) * 10**-9
+
+        return P
+
+    def partitioning(self, temperature, pressure):
+
+        logD = self.alpha + (self.beta * self.fO2) + (self.chi * self.nbo_t) * (self.delta * (1 / temperature)) + \
+               (self.epislon * (temperature / pressure))
+
+        D = 10**logD
+
+        return D
 
 
     def fractionate_metal_exponential(self):
@@ -69,7 +106,9 @@ class Model:
         self.metal_mass_added = (self.core_fraction_per_timestep - previous_core_fraction_per_timestep) * \
                                   self.body_core_mass
 
-        return self.metal_mass_added
+        self.volume_core = (4 / 3) * pi * (self.core_mass / self.density_metal)**3
+        self.core_mantle_boundary_depth = (self.volume_core / ((4 / 3) * pi))**(1 / 3)
+
 
 
     def decay_182hf(self):
@@ -79,5 +118,3 @@ class Model:
         self.moles_bulk_182w += self.__previous_timestep_moles_bulk_182hf - self.moles_bulk_182hf
         self.mass_bulk_182w = self.moles_bulk_182w * self.__molar_mass_182w
         self.mass_bulk_182hf = (self.__original_moles_bulk_182hf * self.__molar_mass_182hf) - self.mass_bulk_182w
-
-        print(self.moles_bulk_182w, self.moles_bulk_182hf, self.moles_bulk_182hf - self.moles_bulk_182w)

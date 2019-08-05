@@ -16,6 +16,18 @@ volume_vestian_core = (4 / 3) * pi * (radius_vestian_core**3)
 mass_vestian_core = volume_vestian_core * density_metal
 max_modeling_time = 100 * 10**6
 
+alpha = 0
+beta = 0
+chi = 0
+delta = 0
+epsilon = 0
+
+surface_temp = 0
+surface_pressure = 0
+therm_expansivity = 0
+heat_capacity = 0
+gravity = 0.25
+
 time_range = np.arange(0, max_modeling_time + timestep, timestep)
 
 
@@ -34,7 +46,17 @@ m = Model(
     max_time_core_formation=max_core_formation_time,
     fO2=fO2,
     core_fraction_per_timestep=core_fraction_per_timestep,
-    conc_bulk_182hf=conc_bulk_182hf
+    conc_bulk_182hf=conc_bulk_182hf,
+    alpha=alpha,
+    beta=beta,
+    chi=chi,
+    delta=delta,
+    epsilon=epsilon,
+    surface_temperature=surface_temp,
+    surface_pressure=surface_pressure,
+    silicate_thermal_expansivity=therm_expansivity,
+    gravitational_acceleration=gravity,
+    silicate_heat_capacity=heat_capacity,
 )
 
 while m.time <= max_modeling_time:
@@ -51,6 +73,12 @@ while m.time <= max_modeling_time:
     # fractionate some metal
     metal_added = m.fractionate_metal_exponential()
     metal_added_at_time.append(m.core_mass)
+
+    # calculate partitioning
+    t = m.adiabat()
+    p = m.hydrostat()
+    d = m.partitioning(temperature=t, pressure=p)
+    cmb_depth = m.core_mantle_boundary_depth
 
 
 fig1 = plt.figure()
