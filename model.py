@@ -5,7 +5,7 @@ class Model:
 
     def __init__(
             self, body_core_mass, body_mass, body_radius, timestep, max_time_core_formation, fO2, core_fraction_per_timestep,
-            conc_bulk_182hf, alpha, beta, chi, delta, epsilon, surface_temperature, surface_pressure,
+            conc_bulk_182hf, conc_bulk_184w, alpha, beta, chi, delta, epsilon, surface_temperature, surface_pressure,
             silicate_thermal_expansivity, gravitational_acceleration, silicate_heat_capacity
     ):
 
@@ -23,10 +23,9 @@ class Model:
         self.__molar_mass_182hf = 178.49
 
         self.core_mass = 0  # the modeled core mass at time, do not set
-        self.silicate_mass = 0
+        self.mantle_mass = 0
         self.metal_mass_added = 0
         self.core_fraction_per_timestep = core_fraction_per_timestep  # the fraction of metal to be added to the core, set
-        self.__silicate_mass = 0  # the mass of the silicate magma ocean at time, do not set
 
         self.conc_bulk_182hf = conc_bulk_182hf
         self.mass_bulk_182hf = self.conc_bulk_182hf * body_mass
@@ -35,15 +34,23 @@ class Model:
         self.__original_moles_bulk_182hf = copy(self.moles_bulk_182hf)
         self.__previous_timestep_moles_bulk_182hf = copy(self.moles_bulk_182hf)
 
-        self.__conc_silicate_182w = 0
+        self.conc_silicate_182w = 0
         self.moles_bulk_182w = 0
         self.mass_bulk_182w = 0
         self.__conc_metal_182w = 0
         self.conc_core_182w = 0
 
-        self.__conc_silicate_184w = 0
-        self.__conc_metal_184w = 0
-        self.__conc_core_184w = 0
+        self.conc_bulk_184w = conc_bulk_184w
+        self.conc_silicate_184w = self.conc_bulk_184w
+        self.conc_core_184w = 0
+        self.conc_core_bound_metal_184w = 0
+        self.mass_core_bound_metal_184w = 0
+        self.conc_core_bound_metal_182w = 0
+        self.mass_core_bound_metal_182w = 0
+        self.mass_silicate_184w = (self.conc_silicate_184w * self.body_mass)
+        self.mass_core_184w = 0
+        self.mass_core_182w = 0
+        self.mass_silicate_182w = 0
 
         self.alpha = alpha
         self.beta = beta
@@ -63,6 +70,7 @@ class Model:
         self.core_mantle_boundary_depth = 0
 
         self.volume_core = 0
+        self.volume_mantle = (4 / 3) * pi * (self.body_radius)**3
         self.density_metal = 7800
         self.density_silicate = 3750
 
@@ -89,10 +97,24 @@ class Model:
 
         return D
 
+    def partition_184w(self, D):
 
-    def partition_w(self, D):
+        self.conc_core_bound_metal_184w = self.conc_silicate_184w * D  # make sure conc silicate reflects equilibrium
+        self.mass_core_bound_metal_184w = self.conc_core_bound_metal_184w * self.metal_mass_added
+        self.mass_core_184w += self.mass_core_bound_metal_184w
+        self.mass_silicate_184w -= self.mass_core_bound_metal_184w
+        self.conc_core_184w = self.mass_core_184w / self.core_mass
+        self.conc_silicate_184w = self.mass_silicate_184w / self.mantle_mass
+        
+        
+    def partition_182w(self, D):
 
-        pass
+        self.conc_core_bound_metal_182w = self.conc_silicate_182w
+        self.mass_core_bound_metal_182w = self.conc_core_bound_metal_182w * self.metal_mass_added
+        self.mass_core_182w = self.mass_core_bound_metal_182w
+        self.mass_silicate_184w -= self.mass_core_bound_metal_182w
+        self.conc_core_182w = self.mass_core_182w / self.core_mass
+        self.conc_silicate_182w = self.mass_silicate_182w / self.mantle_mass
 
 
     def fractionate_metal_exponential(self):
@@ -103,6 +125,9 @@ class Model:
         else:
             core_growth_step_function = 1 / (1 - exp(self.__core_growth_constant * self.time))
 
+        if self.time == 0 or self.time == 0 + self.timestep:
+            self.core_fraction_per_timestep = 0
+
         self.__core_growth_constant = log(0.01) / self.max_time_core_formation
         previous_core_fraction_per_timestep = copy(self.core_fraction_per_timestep)
         self.core_fraction_per_timestep = core_growth_step_function * (1 - exp(self.__core_growth_constant * self.time))
@@ -110,8 +135,9 @@ class Model:
         self.mantle_mass = self.body_mass - self.core_mass
         self.metal_mass_added = (self.core_fraction_per_timestep - previous_core_fraction_per_timestep) * \
                                   self.body_core_mass
-
+        self.mantle_mass -= self.metal_mass_added
         self.volume_core = (self.core_mass / self.density_metal)
+        self.volume_mantle = self.volume_mantle - self.volume_core
         self.core_mantle_boundary_depth = (self.volume_core / ((4 / 3) * pi))**(1 / 3)
 
 
@@ -126,5 +152,5 @@ class Model:
 
     def set_concentrations(self):
 
-        self.conc_silicate_182hf = self.mass_bulk_182hf / self.silicate_mass
+        self.conc_silicate_182hf = self.mass_bulk_182hf / self.mantle_mass
         self.conc_bulk_182hf = self.conc_silicate_182hf
