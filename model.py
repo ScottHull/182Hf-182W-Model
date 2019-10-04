@@ -11,7 +11,7 @@ class Model:
 
         # general modeling parameters
         self.timestep = timestep  # the modeling timestep, set
-        self.time = 0  # the model time, do not set
+        self.time = 0.0  # the model time, do not set
         self.max_time_core_formation = max_time_core_formation  # the maximum timing of core formation, set
         self.__molar_mass_182w = 183.84
         self.__molar_mass_182hf = 178.49
@@ -32,7 +32,7 @@ class Model:
         self.silicate_thermal_expansivity = silicate_thermal_expansivity
         self.silicate_heat_capacity = silicate_heat_capacity
 
-        self.core_mantle_boundary_depth = 0
+        self.core_mantle_boundary_depth = 0.0
 
         # environment parameters
         self.fO2 = fO2
@@ -43,10 +43,12 @@ class Model:
         self.body_core_mass = body_core_mass  # the core mass of the modern body, set
         self.body_mass = body_mass  # the bulk mass of the modern body, set
         self.body_radius = body_radius
-        self.core_mass = 0  # the modeled core mass at time, do not set
-        self.mantle_mass = 0
-        self.metal_mass_added = 0
+        self.core_mass = 0.0  # the modeled core mass at time, do not set
+        self.mantle_mass = 0.0
+        self.metal_mass_added = 0.0
+        self.core_fraction_at_time = 0.0
         self.core_fraction_per_timestep = core_fraction_per_timestep  # the fraction of metal to be added to the core
+        self.core_fraction_at_time = 0
         self.volume_core = 0
         self.volume_mantle = (4 / 3) * pi * (self.body_radius) ** 3
 
@@ -59,25 +61,25 @@ class Model:
         self.__previous_timestep_moles_bulk_182hf = copy(self.moles_bulk_182hf)
 
         # 182w parameters
-        self.conc_silicate_182w = 0
-        self.moles_bulk_182w = 0
-        self.mass_bulk_182w = 0
-        self.__conc_metal_182w = 0
-        self.conc_core_182w = 0
-        self.conc_core_bound_metal_182w = 0
-        self.mass_core_bound_metal_182w = 0
-        self.mass_core_182w = 0
-        self.mass_silicate_182w = 0
+        self.conc_silicate_182w = 0.0
+        self.moles_bulk_182w = 0.0
+        self.mass_bulk_182w = 0.0
+        self.__conc_metal_182w = 0.0
+        self.conc_core_182w = 0.0
+        self.conc_core_bound_metal_182w = 0.0
+        self.mass_core_bound_metal_182w = 0.0
+        self.mass_core_182w = 0.0
+        self.mass_silicate_182w = 0.0
 
         # 184w parameters
 
         self.conc_bulk_184w = conc_bulk_184w
         self.conc_silicate_184w = self.conc_bulk_184w
-        self.conc_core_184w = 0
-        self.conc_core_bound_metal_184w = 0
-        self.mass_core_bound_metal_184w = 0
+        self.conc_core_184w = 0.0
+        self.conc_core_bound_metal_184w = 0.0
+        self.mass_core_bound_metal_184w = 0.0
         self.mass_silicate_184w = (self.conc_silicate_184w * self.body_mass)
-        self.mass_core_184w = 0
+        self.mass_core_184w = 0.0
 
     def adiabat(self):
 
@@ -104,26 +106,27 @@ class Model:
 
     def fractionate_metal_exponential(self):
 
-        core_growth_step_function = 1
+        core_growth_step_function = 1.0
         if self.time <= self.max_time_core_formation:
-            core_growth_step_function = 1
+            core_growth_step_function = 1.0
         else:
-            core_growth_step_function = 1 / (1 - exp(self.__core_growth_constant * self.time))
+            core_growth_step_function = 1.0 / (1.0 - exp(self.__core_growth_constant * self.time))
 
-        if self.time == 0 or self.time == 0 + self.timestep:
-            self.core_fraction_per_timestep = 0
+        if self.time == 0.0:
+            self.core_fraction_per_timestep = 0.0
 
         self.__core_growth_constant = log(0.01) / self.max_time_core_formation
-        previous_core_fraction_per_timestep = copy(self.core_fraction_per_timestep)
-        self.core_fraction_per_timestep = core_growth_step_function * (1 - exp(self.__core_growth_constant * self.time))
-        self.core_mass = self.body_core_mass * self.core_fraction_per_timestep
+        previous_core_fraction_per_timestep = copy(self.core_fraction_at_time)
+        previous_core_mass = copy(self.core_mass)
+        self.core_fraction_at_time = core_growth_step_function * (1.0 - exp(self.__core_growth_constant * self.time))
+        self.core_fraction_per_timestep = self.core_fraction_at_time - previous_core_fraction_per_timestep
+        self.core_mass = self.body_core_mass * self.core_fraction_at_time
         self.mantle_mass = self.body_mass - self.core_mass
-        self.metal_mass_added = (self.core_fraction_per_timestep - previous_core_fraction_per_timestep) * \
-                                  self.body_core_mass
-        self.mantle_mass -= self.metal_mass_added
+        self.metal_mass_added = self.core_mass - previous_core_mass
         self.volume_core = (self.core_mass / self.density_metal)
         self.volume_mantle = self.volume_mantle - self.volume_core
         self.core_mantle_boundary_depth = (self.volume_core / ((4 / 3) * pi))**(1 / 3)
+        print(self.body_core_mass)
 
 
     def decay_182hf(self):
