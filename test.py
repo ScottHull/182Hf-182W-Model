@@ -49,8 +49,14 @@ bulk_moles_182w = []
 
 cmb_depth = []
 
+bulk_conc_182hf = []
 core_conc_184w = []
 core_conc_182w = []
+mantle_conc_182w = []
+mantle_conc_184w = []
+
+moles_bulk_182hf = []
+moles_bulk_182w = []
 
 
 
@@ -94,17 +100,17 @@ while m.time < max_modeling_time:
     time_range.append(m.time)
     print("At time {} Myr".format(m.time / float(10**6)))
 
-    # decay 182Hf to 182W
-    m.decay_182hf()
-    bulk_mass_182w.append(m.mass_bulk_182w)
-    bulk_moles_182hf.append(m.moles_bulk_182hf)
-    bulk_moles_182w.append(m.moles_bulk_182w)
-
     # fractionate some metal
     m.fractionate_metal_exponential()
     metal_added_at_time.append(m.metal_mass_added)
     core_mass.append(m.core_mass)
     mantle_mass.append(m.mantle_mass)
+
+    # decay 182Hf to 182W
+    m.decay_182hf()
+    bulk_mass_182w.append(m.mass_bulk_182w)
+    bulk_moles_182hf.append(m.moles_bulk_182hf)
+    bulk_moles_182w.append(m.moles_bulk_182w)
 
     # calculate partitioning
     t = m.adiabat()
@@ -116,13 +122,32 @@ while m.time < max_modeling_time:
         # calculate equilibrium exchange
         mass_exchange_182w = m.exchange_mass(D=d, conc_w_silicate=m.conc_silicate_182w)
         mass_exchange_184w = m.exchange_mass(D=d, conc_w_silicate=m.conc_silicate_184w)
-        # equilibrate
-        m.set_concentrations(exchange_mass_182w=mass_exchange_182w, exchange_mass_184w=mass_exchange_184w)
-        mass_182w_added_to_core = m.conc_core_bound_metal_182w * m.metal_mass_added
-        mass_184w_added_to_core = m.conc_core_bound_metal_184w * m.metal_mass_added
     else:
         mass_exchange_182w = 0
         mass_exchange_184w = 0
+
+    # equilibrate
+    m.set_concentrations(exchange_mass_182w=mass_exchange_182w, exchange_mass_184w=mass_exchange_184w)
+    m.set_masses()
+
+    bulk_conc_182hf.append(m.conc_bulk_182hf)
+
+    core_conc_182w.append(m.conc_core_182w)
+    core_conc_184w.append(m.conc_core_184w)
+
+    mantle_conc_182w.append(m.conc_silicate_182w)
+    mantle_conc_184w.append(m.conc_silicate_184w)
+
+    core_mass_182w.append(m.mass_core_182w)
+    mantle_mass_182w.append(m.mass_silicate_182w)
+    core_mass_184w.append(m.mass_core_184w)
+    mantle_mass_184w.append(m.mass_silicate_184w)
+
+    moles_bulk_182hf.append(m.moles_bulk_182hf)
+    moles_bulk_182w.append(m.moles_bulk_182w)
+
+
+
 
     output_row = [m.time, m.core_fraction_at_time, m.core_mass, m.mantle_mass, m.metal_mass_added, m.core_mantle_boundary_depth, t, p, d, m.conc_bulk_182hf, (m.conc_core_182w + m.conc_silicate_182w),
                   mass_exchange_182w, mass_exchange_184w]
@@ -130,6 +155,39 @@ while m.time < max_modeling_time:
 
 output_file.close()
 
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(111)
+ax1.axhline(mass_vestian_core, linestyle="--", linewidth=1.0, color='red', label="Modern Vesta Core Mass")
+ax1.plot([i / (10**6) for i in time_range], core_mass, linewidth=1.5, color='black', label="Vestian Core Mass")
+ax1.grid()
+ax1.set_xlabel("Time (Ma)")
+ax1.set_ylabel("Core Mass Added at Time (kg)")
+ax1.set_title("Exponential Core Growth Model on Vesta")
+
+fig2 = plt.figure()
+ax2 = fig2.add_subplot(111)
+ax2.plot([i / (10**6) for i in time_range], bulk_conc_182hf, linewidth=1.5, color='red', label="Bulk [182Hf]")
+ax2.plot([i / (10**6) for i in time_range], mantle_conc_182w, linewidth=1.5, color='blue', label="Mantle [182W]")
+ax2.plot([i / (10**6) for i in time_range], mantle_conc_184w, linewidth=1.5, color='green', label="Mantle [184W]")
+ax2.grid()
+ax2.set_xlabel("Time (Ma)")
+ax2.set_ylabel("Bulk Concentration (kg)")
+ax2.set_title("Concentrations on Vesta")
+ax2.legend(loc='upper right')
+
+fig3 = plt.figure()
+ax3 = fig3.add_subplot(111)
+ax3.plot([i / (10**6) for i in time_range], moles_bulk_182hf, linewidth=1.5, color='red', label="Bulk 182Hf")
+ax3.plot([i / (10**6) for i in time_range], moles_bulk_182w, linewidth=1.5, color='blue', label="Bulk 182W")
+ax3.plot([i / (10**6) for i in time_range], [sum(x) for x in zip(moles_bulk_182hf, moles_bulk_182w)], linewidth=1.5,
+         color='green', label="Bulk Moles 182Hf + 182W")
+ax3.grid()
+ax3.set_xlabel("Time (Ma)")
+ax3.set_ylabel("Moles")
+ax3.set_title("Moles on Vesta")
+ax3.legend(loc='lower right')
+
+plt.show()
 
 
 
@@ -137,19 +195,16 @@ output_file.close()
 
 
 
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+
+
+
+
+
+
+
+
+
+
 # fig1 = plt.figure()
 # ax1 = fig1.add_subplot(111)
 # ax1.axhline(mass_vestian_core, linestyle="--", linewidth=1.0, color='red', label="Modern Vesta Core Mass")
