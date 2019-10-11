@@ -91,8 +91,8 @@ class Model:
 
     def hydrostat(self):
 
-        P = self.surface_pressure + (self.density_silicate * self.gravitational_acceleration *
-                                     self.core_mantle_boundary_depth) * 10**-9
+        P = (self.surface_pressure + (self.density_silicate * self.gravitational_acceleration *
+                                     self.core_mantle_boundary_depth)) * 10**-9
 
         return P
 
@@ -126,20 +126,20 @@ class Model:
         self.metal_mass_added = self.core_mass - previous_core_mass
         self.volume_core = (self.core_mass / self.density_metal)
         self.volume_mantle = self.volume_mantle - self.volume_core
-        self.core_mantle_boundary_depth = (self.volume_core / ((4 / 3) * pi))**(1 / 3)
+        self.core_mantle_boundary_depth = self.body_radius - ((self.volume_core / ((4 / 3) * pi))**(1 / 3))
 
 
     def decay_182hf(self):
 
         self.__previous_timestep_moles_bulk_182hf = copy(self.moles_bulk_182hf)
-        self.moles_bulk_182hf = self.moles_bulk_182hf * exp(self.__decay_const_182hf * self.timestep)
+        self.moles_bulk_182hf = self.__previous_timestep_moles_bulk_182hf * exp(self.__decay_const_182hf * self.timestep)
         self.moles_bulk_182w += self.__previous_timestep_moles_bulk_182hf - self.moles_bulk_182hf
         self.mass_silicate_182w = self.moles_bulk_182w * self.__molar_mass_182w
         self.mass_bulk_182hf = self.moles_bulk_182hf * self.__molar_mass_182hf
         self.mass_silicate_182hf = self.mass_bulk_182hf
 
         self.conc_silicate_182hf = self.mass_silicate_182hf / self.mantle_mass
-        self.conc_bulk_182hf = self.conc_silicate_182hf
+        self.conc_bulk_182hf = self.mass_silicate_182hf / self.body_mass
         self.conc_silicate_182w = self.mass_silicate_182w / self.mantle_mass
         self.conc_silicate_184w = self.conc_silicate_184w / self.mantle_mass
 
