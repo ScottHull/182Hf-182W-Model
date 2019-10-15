@@ -64,6 +64,7 @@ class Model:
         # 182w parameters
         self.conc_silicate_182w = 0.0
         self.moles_bulk_182w = 0.0
+        self.mass_silicate_added_182w = 0.0
         self.mass_bulk_182w = 0.0
         self.__conc_metal_182w = 0.0
         self.conc_core_182w = 0.0
@@ -75,11 +76,12 @@ class Model:
         # 184w parameters
 
         self.conc_bulk_184w = conc_bulk_184w
-        self.conc_silicate_184w = self.conc_bulk_184w
+        self.conc_silicate_184w = (self.conc_bulk_184w * self.body_mass) / self.mantle_mass
         self.conc_core_184w = 0.0
         self.conc_core_bound_metal_184w = 0.0
         self.mass_core_bound_metal_184w = 0.0
-        self.mass_silicate_184w = (self.conc_silicate_184w * self.body_mass)
+        self.mass_bulk_184w = self.conc_bulk_184w * self.body_mass
+        self.mass_silicate_184w = (self.conc_silicate_184w * self.mantle_mass)
         self.mass_core_184w = 0.0
 
     def adiabat(self):
@@ -132,19 +134,26 @@ class Model:
     def decay_182hf(self):
 
         self.__previous_timestep_moles_bulk_182hf = copy(self.moles_bulk_182hf)
-        self.moles_bulk_182hf = self.__previous_timestep_moles_bulk_182hf * exp(self.__decay_const_182hf * self.timestep)
+        self.__previous_mass_bulk_182w = copy(self.mass_bulk_182w)
+        self.__previous_mass_silicate_182w = copy(self.mass_silicate_182w)
+        self.moles_bulk_182hf = self.__previous_timestep_moles_bulk_182hf * \
+                                exp(self.__decay_const_182hf * self.timestep)
         self.moles_bulk_182w += self.__previous_timestep_moles_bulk_182hf - self.moles_bulk_182hf
-        self.mass_silicate_182w = self.moles_bulk_182w * self.__molar_mass_182w
+        self.mass_bulk_182w += (self.__previous_timestep_moles_bulk_182hf - self.moles_bulk_182hf) * self.__molar_mass_182w
+        self.mass_silicate_added_182w = self.__previous_mass_silicate_182w + \
+                                        (self.mass_bulk_182w - self.__previous_mass_bulk_182w)
+        self.mass_silicate_182w = self.__previous_mass_silicate_182w + self.mass_silicate_added_182w
         self.mass_bulk_182hf = self.moles_bulk_182hf * self.__molar_mass_182hf
         self.mass_silicate_182hf = self.mass_bulk_182hf
 
         self.conc_silicate_182hf = self.mass_silicate_182hf / self.mantle_mass
         self.conc_bulk_182hf = self.mass_silicate_182hf / self.body_mass
         self.conc_silicate_182w = self.mass_silicate_182w / self.mantle_mass
-        self.conc_silicate_184w = self.conc_silicate_184w / self.mantle_mass
+
+        self.conc_silicate_184w = self.mass_silicate_184w / self.mantle_mass
 
 
-    def exchange_mass(self, D, conc_w_silicate):
+    def exchange_mass(self, D, mass_w_silicate):
 
         """
         The exchange mass of the either 182W or 184W prior to equilibration.  This function is generic in order to
@@ -156,9 +165,9 @@ class Model:
 
         # conc_w_silicate should be the concentration of the isotope in the silicate at time t - \Delta t
 
-        numerator = conc_w_silicate / self.mantle_mass
-        denominator = ((1 / self.metal_mass_added) + (D * (1 / self.mantle_mass)))
-        m = D * (numerator / denominator)
+        numerator = D * (mass_w_silicate / self.mantle_mass)
+        denominator = (1.0 / self.metal_mass_added) + (D / self.mantle_mass)
+        m = numerator / denominator
 
         return m
 
@@ -168,12 +177,14 @@ class Model:
             # 182w
             self.conc_silicate_182w = self.conc_silicate_182w - (exchange_mass_182w / self.mantle_mass)
             self.conc_core_bound_metal_182w = exchange_mass_182w / self.metal_mass_added
-            self.conc_core_182w = self.mass_core_182w + (self.conc_core_bound_metal_182w * self.mass_core_bound_metal_182w)
+            self.mass_core_182w += exchange_mass_182w
+            self.conc_core_182w = self.mass_core_182w / self.core_mass
 
             # 184w
             self.conc_silicate_184w = self.conc_silicate_184w - (exchange_mass_184w / self.mantle_mass)
             self.conc_core_bound_metal_184w = exchange_mass_184w / self.metal_mass_added
-            self.conc_core_184w = self.mass_core_184w + (self.conc_core_bound_metal_184w * self.mass_core_bound_metal_184w)
+            self.mass_core_184w += exchange_mass_184w
+            self.conc_core_184w = self.mass_core_184w / self.core_mass
 
     def set_masses(self):
 
@@ -184,3 +195,9 @@ class Model:
         # 184w
         self.mass_core_184w += (self.mass_core_bound_metal_184w * self.conc_core_bound_metal_184w)
         self.mass_silicate_184w = self.mantle_mass * self.conc_silicate_184w
+
+    def calculate_epsilon182w(self, sample_ratio, standard_ratio=0.86468):
+
+        epsilon = ((sample_ratio / standard_ratio) - 1.0) * (10.0**4.0)
+
+        return epsilon
