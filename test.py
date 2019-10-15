@@ -17,7 +17,7 @@ conc_bulk_184w = 23.878 * 10**-9
 radius_vestian_core = 113.0 * 1000.0
 volume_vestian_core = (4.0 / 3.0) * pi * (radius_vestian_core**3.0)
 mass_vestian_core = volume_vestian_core * density_metal
-max_modeling_time = 20 * 10**6
+max_modeling_time = 100 * 10**6
 
 alpha = 1.11
 beta = -1.18
@@ -133,7 +133,7 @@ while m.time < max_modeling_time:
 
     # equilibrate
     m.set_concentrations(exchange_mass_182w=mass_exchange_182w, exchange_mass_184w=mass_exchange_184w)
-    m.set_masses()
+    # m.set_masses()
 
     e_182w_bulk = m.calculate_epsilon182w(sample_ratio=(m.mass_bulk_182w / m.mass_bulk_184w))
     e_182w_mantle = m.calculate_epsilon182w(sample_ratio=(m.mass_silicate_182w / m.mass_silicate_184w))
@@ -215,10 +215,11 @@ ax5 = fig5.add_subplot(111)
 ax5.plot([i / (10**6) for i in time_range], epsilon_182w_bulk, linewidth=1.5, color='blue', label="Epsilon Bulk")
 ax5.plot([i / (10**6) for i in time_range], epsilon_182w_mantle, linewidth=1.5, color='red', label="Epsilon Mantle")
 ax5.plot([i / (10**6) for i in time_range], epsilon_182w_core, linewidth=1.5, color='green', label="Epsilon Core")
+ax5.axvline(5, color='black', linestyle="--", label='End Core Formation')
 ax5.grid()
-ax5.set_xlabel("Time (Ma)")
+ax5.set_xlabel("Time (My)")
 ax5.set_ylabel("Epsilon 182W")
-ax5.set_title("Epsilon 182W on Vesta")
+ax5.set_title("Epsilon 182W on Vesta (fO2 = IW{})".format(fO2))
 ax5.legend(loc='upper left')
 
 
