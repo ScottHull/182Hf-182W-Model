@@ -76,7 +76,7 @@ fO2_and_silicate_epsilon_infinite_time = []
 # output_file.write(",".join(headers) + "\n")
 
 
-for i in np.arange(-2.25, 0, 0.01):
+for i in np.arange(-1.0, 1.0, 0.01):
     # build the model
     m = Model(
         body_core_mass=mass_vestian_core,
@@ -163,6 +163,20 @@ for i in np.arange(-2.25, 0, 0.01):
         epsilon_182w_core.append(e_182w_core)
 
     fO2_and_silicate_epsilon_infinite_time.append((i, m.calculate_epsilon182w(sample_ratio=(m.mass_silicate_182w / m.mass_silicate_184w))))
+
+
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(111)
+ax1.plot([i[0] for i in fO2_and_silicate_epsilon_infinite_time], [i[1] for i in fO2_and_silicate_epsilon_infinite_time],
+         color='black')
+ax1.axhline(30, color='red', linestyle="--")
+ax1.grid()
+ax1.set_xlabel("fO2")
+ax1.set_ylabel("Epsilon 182W")
+ax1.set_title("Mantle Epsilon 182W as a Function of fO2")
+
+plt.show()
+
 
 
 
