@@ -62,7 +62,9 @@ epsilon_182w_bulk = []
 epsilon_182w_mantle = []
 epsilon_182w_core = []
 
+fO2_and_bulk_epsilon_infinite_time = []
 fO2_and_silicate_epsilon_infinite_time = []
+fO2_and_core_epsilon_infinite_time = []
 
 
 
@@ -162,13 +164,22 @@ for i in np.arange(-1.0, 1.0, 0.01):
         epsilon_182w_mantle.append(e_182w_mantle)
         epsilon_182w_core.append(e_182w_core)
 
-    fO2_and_silicate_epsilon_infinite_time.append((i, m.calculate_epsilon182w(sample_ratio=(m.mass_silicate_182w / m.mass_silicate_184w))))
+    fO2_and_bulk_epsilon_infinite_time.append(
+        (i, m.calculate_epsilon182w(sample_ratio=(m.mass_bulk_182w / m.mass_bulk_184w))))
+    fO2_and_silicate_epsilon_infinite_time.append(
+        (i, m.calculate_epsilon182w(sample_ratio=(m.mass_silicate_182w / m.mass_silicate_184w))))
+    fO2_and_core_epsilon_infinite_time.append(
+        (i, m.calculate_epsilon182w(sample_ratio=(m.mass_core_182w / m.mass_core_184w))))
 
 
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111)
+ax1.plot([i[0] for i in fO2_and_bulk_epsilon_infinite_time], [i[1] for i in fO2_and_bulk_epsilon_infinite_time],
+         color='black', label='bulk')
 ax1.plot([i[0] for i in fO2_and_silicate_epsilon_infinite_time], [i[1] for i in fO2_and_silicate_epsilon_infinite_time],
-         color='black')
+         color='blue', label='mantle')
+ax1.plot([i[0] for i in fO2_and_core_epsilon_infinite_time], [i[1] for i in fO2_and_core_epsilon_infinite_time],
+         color='green', label='core')
 ax1.axhline(30, color='red', linestyle="--")
 ax1.grid()
 ax1.set_xlabel("fO2")
