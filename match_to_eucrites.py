@@ -62,9 +62,16 @@ fO2_and_starting_concs = {
         },
 }
 
-for fO2 in fO2_and_starting_concs.keys():
-    time_range = []
+fO2_and_bulk_epsilon_infinite_time = []
+fO2_and_silicate_epsilon_infinite_time = []
+fO2_and_core_epsilon_infinite_time = []
 
+
+
+
+for fO2 in fO2_and_starting_concs.keys():
+
+    time_range = []
 
     conc_bulk_182hf = fO2_and_starting_concs[fO2]['182hf']
     conc_bulk_184w = fO2_and_starting_concs[fO2]['184w']
@@ -122,8 +129,57 @@ for fO2 in fO2_and_starting_concs.keys():
         # equilibrate
         m.set_concentrations(exchange_mass_182w=mass_exchange_182w, exchange_mass_184w=mass_exchange_184w)
 
-        e_182w_bulk = m.calculate_epsilon182w(sample_ratio=(m.mass_bulk_182w / m.mass_bulk_184w))
-        e_182w_mantle = m.calculate_epsilon182w(sample_ratio=(m.mass_silicate_182w / m.mass_silicate_184w))
-        e_182w_core = m.calculate_epsilon182w(sample_ratio=(m.mass_core_182w / m.mass_core_184w))
+    fO2_and_bulk_epsilon_infinite_time.append(
+        m.calculate_epsilon182w(sample_ratio=(m.mass_bulk_182w / m.mass_bulk_184w)))
+    fO2_and_silicate_epsilon_infinite_time.append(
+        m.calculate_epsilon182w(sample_ratio=(m.mass_silicate_182w / m.mass_silicate_184w)))
+    fO2_and_core_epsilon_infinite_time.append(
+        m.calculate_epsilon182w(sample_ratio=(m.mass_core_182w / m.mass_core_184w)))
+
+
+
+
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(111)
+ax1.plot(sorted(fO2_and_starting_concs.keys()),
+         [fO2_and_starting_concs[key]['182hf'] * 10**9 for key in sorted(fO2_and_starting_concs.keys())], linewidth=2.0, color='blue', label='182Hf')
+ax1.plot(sorted(fO2_and_starting_concs.keys()),
+         [fO2_and_starting_concs[key]['184w'] * 10**9 for key in sorted(fO2_and_starting_concs.keys())], linewidth=2.0, color='red', label='184W')
+ax1.grid()
+ax1.set_xlabel("fO2")
+ax1.set_ylabel("Concentration (ppb)")
+ax1.set_title("Initial Concentrations in Vesta")
+ax1.legend(loc='upper right')
+
+fig2 = plt.figure()
+ax2 = fig2.add_subplot(111)
+ax2.plot(sorted(fO2_and_starting_concs.keys())[2:],
+         [fO2_and_starting_concs[key]['182hf'] * 10**9 for key in sorted(fO2_and_starting_concs.keys())][2:], linewidth=2.0, color='blue', label='182Hf')
+ax2.plot(sorted(fO2_and_starting_concs.keys())[2:],
+         [fO2_and_starting_concs[key]['184w'] * 10**9 for key in sorted(fO2_and_starting_concs.keys())][2:], linewidth=2.0, color='red', label='184W')
+ax2.grid()
+ax2.set_xlabel("fO2")
+ax2.set_ylabel("Concentration (ppb)")
+ax2.set_title("Initial Bulk Concentrations in Vesta")
+ax2.legend(loc='upper right')
+
+fig3 = plt.figure()
+ax3 = fig3.add_subplot(111)
+z = zip([fO2_and_starting_concs[key]['182hf'] * 10**9 for key in sorted(fO2_and_starting_concs.keys())][2:],
+        [fO2_and_starting_concs[key]['184w'] * 10**9 for key in sorted(fO2_and_starting_concs.keys())][2:])
+ax3.plot(sorted(fO2_and_starting_concs.keys())[2:],
+         [i[0] / i[1] for i in z], linewidth=2.0, color='black', label='182Hf/184W')
+ax3.axhline(0.866555125, linewidth=2.0, linestyle='--', color='red', label='182W/184W (Vesta at infinite time)')
+ax3.grid()
+ax3.set_xlabel("fO2")
+ax3.set_ylabel("182Hf/184W")
+ax3.set_title("Initial Bulk 182Hf/184W in Vesta")
+ax3.legend(loc='lower right')
+
+
+
+plt.show()
+
+
 
 
