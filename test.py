@@ -9,11 +9,13 @@ density_metal = 7800
 max_core_formation_time = 5.0 * 10**6
 timestep = 5.0 * 10**5
 core_fraction_per_timestep = max_core_formation_time / timestep
-fO2 = -2.25
+fO2 = -0.5
 body_mass = 2.59 * (10**20)
 body_radius = 262.7 * 1000
-conc_bulk_182hf = 20.692 * 10**-9
-conc_bulk_184w = 23.878 * 10**-9
+
+conc_bulk_182hf = 1.71E-08
+conc_bulk_184w = 3.06051E-08
+
 radius_vestian_core = 113.0 * 1000.0
 volume_vestian_core = (4.0 / 3.0) * pi * (radius_vestian_core**3.0)
 mass_vestian_core = volume_vestian_core * density_metal

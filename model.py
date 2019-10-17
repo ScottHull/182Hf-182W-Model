@@ -13,8 +13,8 @@ class Model:
         self.timestep = timestep  # the modeling timestep, set
         self.time = 0.0  # the model time, do not set
         self.max_time_core_formation = max_time_core_formation  # the maximum timing of core formation, set
-        self.__molar_mass_182w = 183.84
-        self.__molar_mass_182hf = 178.49
+        self.__molar_mass_182w = 183.84 / 1000  # kg/mol
+        self.__molar_mass_182hf = 178.49 / 1000  # kg/mol
         self.__half_life_182hf = 8.9 * 10 ** 6  # the half life of 182Hf, do not set
         self.__decay_const_182hf = log(0.5) / self.__half_life_182hf  # the decay constant of 182Hf, do not set
         self.alpha = alpha
