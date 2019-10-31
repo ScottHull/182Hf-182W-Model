@@ -2,6 +2,7 @@ from model import Model
 import os
 from math import pi
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 density_silicate_melt = 3750
@@ -66,6 +67,7 @@ fO2_and_bulk_epsilon_infinite_time = []
 fO2_and_silicate_epsilon_infinite_time = []
 fO2_and_core_epsilon_infinite_time = []
 
+df_dict = {}
 
 
 
@@ -136,6 +138,29 @@ for fO2 in fO2_and_starting_concs.keys():
     fO2_and_core_epsilon_infinite_time.append(
         m.calculate_epsilon182w(sample_ratio=(m.mass_core_182w / m.mass_core_184w)))
 
+    df_dict.update({
+        fO2:
+            {
+                'bulk': m.calculate_epsilon182w(sample_ratio=(m.mass_bulk_182w / m.mass_bulk_184w)),
+                'silicate': m.calculate_epsilon182w(sample_ratio=(m.mass_silicate_182w / m.mass_silicate_184w)),
+                'core': m.calculate_epsilon182w(sample_ratio=(m.mass_core_182w / m.mass_core_184w)),
+            }
+    })
+
+
+df_dict_to_csv = {}
+for key in df_dict.keys():
+    s_bulk = "{}-{}".format(key, 'bulk')
+    s_silicate = "{}-{}".format(key, 'silicate')
+    s_core = "{}-{}".format(key, 'core')
+    df_dict_to_csv.update({
+        s_bulk: [df_dict[key]['bulk']],
+        s_silicate: [df_dict[key]['silicate']],
+        s_core: [df_dict[key]['core']]
+    })
+pd.DataFrame(df_dict_to_csv).to_csv('fO2_matched_to_eucrites.csv')
+
+
 
 
 
@@ -178,7 +203,7 @@ ax3.legend(loc='lower right')
 
 
 
-plt.show()
+# plt.show()
 
 
 

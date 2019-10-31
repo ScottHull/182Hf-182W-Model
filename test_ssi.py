@@ -1,4 +1,4 @@
-from model import Model
+from model import Model_SSI
 import os
 from math import pi
 import numpy as np
@@ -79,7 +79,7 @@ epsilon_182w_core = []
 
 
 # build the model
-m = Model(
+m = Model_SSI(
     body_core_mass=mass_vestian_core,
     body_mass=body_mass,
     body_radius=body_radius,
@@ -99,6 +99,7 @@ m = Model(
     silicate_thermal_expansivity=therm_expansivity,
     gravitational_acceleration=gravity,
     silicate_heat_capacity=heat_capacity,
+    w182_184_ssi=0.86437823
 )
 
 while m.time < max_modeling_time:
